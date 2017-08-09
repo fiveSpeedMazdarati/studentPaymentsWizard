@@ -1,16 +1,21 @@
 // global vars
 
-var element;                  // the text element I'm manipulating
 var index = 0;                // the index value of the array containing object literals
 var previousIndex = 0;        // the previous index value - facilitates "go back" one option
-var historyArray = new Array("0");    // an array of the index of previously visited objects (facilitates more than one step backwards)
+var historyArray = new Array();    // an array of the index of previously visited objects (facilitates more than one step backwards)
                               // it is initialized with one value - "0" - since the 0 index is always the first visited page
+
+var element = document.getElementById('content');               // the text element I'm manipulating
 var linkYes = null;           // the 'yes' link on the page
 var linkNo = null;            // the 'no' link on the page
 var linkStartOver = null;     // the 'start over' link on the page
+var linkGoBack = null;        // the 'go back' link on the page
 
 // set up the listeners on the page
 setUpListeners();
+
+// initial state of the page should not display the Go Back option
+hideGoBack();
 
 // this is an array of js object literals containing all of the pages and their properties - determines the text for the question/outcome and what to display next based on user input
 // could be stored in a database and retrieved on page load, or stored in its own config file instead of living here
@@ -44,19 +49,26 @@ var newPages =
 
 function addToHistory(addThisValue){
 // do something to add a new index value to the last position in the array
-  console.log("Adding value: " + addThisValue + " to the history array.");
-
-
+  //console.log("Adding value: " + addThisValue + " to the history array.");
   historyArray.push(addThisValue);
-  //console.log(historyArray[0]); // this should always be "0" since it's the starting point every time
-  console.log("The array is now this long: " + historyArray.length);
+
+  // there will always be something in the history array after the program adds a value
+  showGoBack();
+
+  //console.log("The array is now this long: " + historyArray.length);
   //console.log(history.toString());
 }
 
 function getPreviousIndex(){
 // do something to return the last value in the history array, then delete it from the array
+console.log("Fetching previous index...");
+
+  console.log("Current Index: " + getIndex());
+
   var previousIndex = historyArray.pop();
-  console.log("The previous index value is: " + previousIndex);
+
+  console.log("Previous Index: " + previousIndex);
+
   return previousIndex;
 }
 
@@ -68,9 +80,6 @@ function clearHistory(){
 
 function updateContent(newIndex){
   //debug code to display what's currently on the page
-  element = document.getElementById('content');
-  //console.log("Original text: " + element.innerHTML);
-  //console.log("Updating to this index value: " + newIndex);
 
   // display the next question text
   element.innerHTML = newPages.pages[newIndex].content;
@@ -82,8 +91,6 @@ function updateContent(newIndex){
       hideTheButtons();
     }else{
       // if this is a question, do something if needed. Style? Add text?
-      //console.log("This is a question");
-
     }
 
   //debug code to display what the script grabbed
@@ -93,10 +100,11 @@ function updateContent(newIndex){
 
 function navigate(answer){
   if(answer == "yes"){
-    //console.log("User clicked 'yes'");
-
     // find the index of the ID property in the array which has the corresponding value contained in the yesDestination property for the current page
-    console.log("navigating to: " + newPages.pages[index].yesDestination);
+    //console.log("navigating to: " + newPages.pages[index].yesDestination);
+
+    // add this to the history array now, *before* the destination index value is retrieved and updated
+    addToHistory(getIndex());
 
     var page = newPages.pages[index].yesDestination;
 
@@ -104,7 +112,7 @@ function navigate(answer){
     //inspect each item in the newPages.pages array
     for(var i = 0; i<newPages.pages.length; i++){
       if(newPages.pages[i]['ID'] == page){
-        console.log("The Array's index value of " + newPages.pages[i]['ID'] + " is " + i);
+        //console.log("The Array's index value of " + newPages.pages[i]['ID'] + " is " + i);
         setIndex(i);
       }
     }
@@ -113,10 +121,12 @@ function navigate(answer){
     updateContent(getIndex());
 
   }else if(answer == "no"){
-    console.log("User clicked 'no'");
+    //debugging code
+    //console.log("User clicked 'no'");
+    //console.log("navigating to: " + newPages.pages[index].noDestination);
 
-    console.log("navigating to: " + newPages.pages[index].noDestination);
-
+    // add this to the history array now, *before* the destination index value is retrieved and updated
+    addToHistory(getIndex());
     var page = newPages.pages[index].noDestination;
 
     // find the object in the array whose index value matches the current object's noDestination property
@@ -131,7 +141,17 @@ function navigate(answer){
 
   }else if(answer == "goBack"){
       // do some stuff to get the last value in the history array and navigate to that index value
+      console.log("Going back one choice.")
+
+      //console.log("The previous index value is: " + getPreviousIndex());
       setIndex(getPreviousIndex());
+      console.log("After running setIndex, the index value is: " + getIndex());
+
+      //check to see if there is still an index value in the history arry. If not, hide the goBack button
+      if(historyArray.length == 0){
+        hideGoBack();
+      }
+
       updateContent(getIndex());
   }else{
     //must be the "start over" option - go back to the beginning
@@ -143,10 +163,10 @@ function navigate(answer){
       element.classList.remove("result");
       showTheButtons();
       clearHistory();
+      hideGoBack();
 
   }
-  // add the index to the history array
-  addToHistory(getIndex());
+
 } // end of navigate function
 
 function setUpListeners(){
@@ -154,11 +174,13 @@ function setUpListeners(){
   linkYes = document.getElementById('answerYes');
   linkNo = document.getElementById('answerNo');
   linkStartOver = document.getElementById('startOver');
+  linkGoBack = document.getElementById('goBack');
 
 
   linkYes.addEventListener("click", function(){navigate("yes")}, false);
   linkNo.addEventListener("click", function(){navigate("no")}, false);
   linkStartOver.addEventListener("click", function(){navigate("startOver")}, false);
+  linkGoBack.addEventListener("click", function(){navigate("goBack")}, false);
 } // end of setUpListeners function
 
 // manage the index value
@@ -177,4 +199,15 @@ function hideTheButtons(){
 
 function showTheButtons(){
   document.getElementById("choice").style.visibility = "visible";
+}
+
+function hideGoBack(){
+  linkGoBack.style.visibility = "hidden";
+}
+
+function showGoBack(){
+  linkGoBack.style.visibility = "visible";
+  // remove the result class from the page element, since it is never possible to go back to a result
+  element.classList.remove("result");
+
 }

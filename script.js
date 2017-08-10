@@ -60,14 +60,8 @@ function addToHistory(addThisValue){
 }
 
 function getPreviousIndex(){
-// do something to return the last value in the history array, then delete it from the array
-console.log("Fetching previous index...");
-
-  console.log("Current Index: " + getIndex());
-
+  // do something to return the last value in the history array, then delete it from the array
   var previousIndex = historyArray.pop();
-
-  console.log("Previous Index: " + previousIndex);
 
   return previousIndex;
 }
@@ -79,8 +73,6 @@ function clearHistory(){
 
 
 function updateContent(newIndex){
-  //debug code to display what's currently on the page
-
   // display the next question text
   element.innerHTML = newPages.pages[newIndex].content;
 
@@ -93,15 +85,11 @@ function updateContent(newIndex){
       // if this is a question, do something if needed. Style? Add text?
     }
 
-  //debug code to display what the script grabbed
-  //console.log("Updated text: " + newPages.pages[newIndex].content);
-
 }
 
 function navigate(answer){
   if(answer == "yes"){
     // find the index of the ID property in the array which has the corresponding value contained in the yesDestination property for the current page
-    //console.log("navigating to: " + newPages.pages[index].yesDestination);
 
     // add this to the history array now, *before* the destination index value is retrieved and updated
     addToHistory(getIndex());
@@ -121,10 +109,6 @@ function navigate(answer){
     updateContent(getIndex());
 
   }else if(answer == "no"){
-    //debugging code
-    //console.log("User clicked 'no'");
-    //console.log("navigating to: " + newPages.pages[index].noDestination);
-
     // add this to the history array now, *before* the destination index value is retrieved and updated
     addToHistory(getIndex());
     var page = newPages.pages[index].noDestination;
@@ -151,6 +135,12 @@ function navigate(answer){
       if(historyArray.length == 0){
         hideGoBack();
       }
+      //remove the 'result' CSS class if it exists, since it is impossible to go back to a result
+      element.classList.remove("result");
+
+      // display the Yes/No buttons if they aren't already displayed, in case a result is showing on the screen
+      // calling this function does not throw an error if the buttons are already showing, so no need to check first
+      showTheButtons();
 
       updateContent(getIndex());
   }else{
@@ -207,7 +197,4 @@ function hideGoBack(){
 
 function showGoBack(){
   linkGoBack.style.visibility = "visible";
-  // remove the result class from the page element, since it is never possible to go back to a result
-  element.classList.remove("result");
-
 }
